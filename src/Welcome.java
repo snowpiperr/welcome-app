@@ -5,10 +5,10 @@ import java.util.DoubleSummaryStatistics;
 import java.util.List;
 import java.util.Random;
 
-import comp127graphics.CanvasWindow;
-import comp127graphics.FontStyle;
-import comp127graphics.GraphicsObject;
-import comp127graphics.GraphicsText;
+import edu.macalester.graphics.CanvasWindow;
+import edu.macalester.graphics.FontStyle;
+import edu.macalester.graphics.GraphicsObject;
+import edu.macalester.graphics.GraphicsText;
 
 /**
  * A lively animation to let you know your development environment is working!
