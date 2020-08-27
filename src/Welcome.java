@@ -34,8 +34,14 @@ public class Welcome {
         double phasing = rand.nextDouble() / 2;
         int index = 0;
         for (FlyingLetter letter : letters) {
+            // Horizontal curve = same frequency for all letters, but with different phases so that
+            // letters are evenly spaced across at t = 0
             letter.getLissajousX().setCycle(1, Math.asin((index + 1.0) / (letters.size() + 1.0) * 2 - 1));
+
+            // Vertical curve = higher frequency for letters later in the word
             letter.getLissajousY().setCycle((index * phasing + 1), 0);
+
+            // Letters fly across the whole window minus margin
             letter.getLissajousX().setRange(margin, canvas.getWidth() - margin);
             letter.getLissajousY().setRange(margin, canvas.getHeight() - margin);
 
@@ -52,6 +58,7 @@ public class Welcome {
             letter.update(t);
         }
 
+        // Slow down when letters are vertically close together
         DoubleSummaryStatistics stats = letters.stream()
             .mapToDouble((l) -> l.getGraphic().getCenter().getY())
             .summaryStatistics();
@@ -63,7 +70,6 @@ public class Welcome {
  * An animated letter that follows a lissajous curve.
  */
 class FlyingLetter {
-
     private final GraphicsText graphic;
     private final SineWave lissajousX, lissajousY;
     private final double hueOffset;
@@ -81,23 +87,26 @@ class FlyingLetter {
         lissajousY = new SineWave();
     }
 
-    public SineWave getLissajousX() {
+    GraphicsObject getGraphic() {
+        return graphic;
+    }
+
+    SineWave getLissajousX() {
         return lissajousX;
     }
 
-    public SineWave getLissajousY() {
+    SineWave getLissajousY() {
         return lissajousY;
     }
 
+    /**
+     * Moves the letter to the appropriate position for time t.
+     */
     void update(double t) {
         graphic.setCenter(
             lissajousX.getValueAt(t),
             lissajousY.getValueAt(t));
         graphic.setFillColor(Color.getHSBColor((float) (hueOffset + t / 20) % 1, 1, 1));
-    }
-
-    public GraphicsObject getGraphic() {
-        return graphic;
     }
 }
 
@@ -118,6 +127,9 @@ class SineWave {
         this.max = max;
     }
 
+    /**
+     * Returns the value of the wave at time t.
+     */
     double getValueAt(double t) {
         return (Math.sin(t * wavelength + offset) + 1) / 2 * (max - min) + min;
     }
