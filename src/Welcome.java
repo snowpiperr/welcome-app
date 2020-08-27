@@ -14,12 +14,19 @@ import edu.macalester.graphics.GraphicsText;
  * A lively animation to let you know your development environment is working!
  */
 public class Welcome {
+    private static final double
+        PHASE_SPREAD = 0.5,
+        INITIAL_TIME = -10,
+        REGULAR_SPEED = 0.025,
+        SLOW_MO_SPEED = 0.005,
+        SLOW_MO_TIGHTNESS = 3,
+        SLOW_MO_CURVE = 5;
+
     static final Random rand = new Random();
 
     private final CanvasWindow canvas;
     private final List<FlyingLetter> letters;
     private final double margin = 32;
-    private double t = -10;
 
     public static void main(String[] args) {
         new Welcome("macalester");
@@ -31,7 +38,7 @@ public class Welcome {
 
         letters = message.chars().mapToObj(FlyingLetter::new).collect(toList());
 
-        double phasing = rand.nextDouble() / 2;
+        double phasing = rand.nextDouble() * PHASE_SPREAD;
         int index = 0;
         for (FlyingLetter letter : letters) {
             // Horizontal curve = same frequency for all letters, but with different phases so that
@@ -44,6 +51,8 @@ public class Welcome {
             // Letters fly across the whole window minus margin
             letter.getLissajousX().setRange(margin, canvas.getWidth() - margin);
             letter.getLissajousY().setRange(margin, canvas.getHeight() - margin);
+            letter.getLissajousX().setTime(INITIAL_TIME);
+            letter.getLissajousY().setTime(INITIAL_TIME);
 
             canvas.add(letter.getGraphic());
 
@@ -54,16 +63,17 @@ public class Welcome {
     }
 
     private void doAnimationStep() {
-        for (FlyingLetter letter : letters) {
-            letter.update(t);
-        }
-
         // Slow down when letters are vertically close together
         DoubleSummaryStatistics stats = letters.stream()
             .mapToDouble((l) -> l.getGraphic().getCenter().getY())
             .summaryStatistics();
         double verticalSpread = (stats.getMax() - stats.getMin()) / canvas.getHeight();
-        t += (1 - 1 / (Math.pow(3 * verticalSpread, 5) + 1)) * 0.025 + 0.005;
+        double dt = (1 - 1 / (Math.pow(SLOW_MO_TIGHTNESS * verticalSpread, SLOW_MO_CURVE) + 1))
+            * REGULAR_SPEED + SLOW_MO_SPEED;
+
+        for (FlyingLetter letter : letters) {
+            letter.update(dt);
+        }
     }
 }
 
@@ -71,9 +81,14 @@ public class Welcome {
  * An animated letter that follows a lissajous curve.
  */
 class FlyingLetter {
+    private static final double
+        COLOR_SPEED = 0.000006,
+        SPARKLE_CURVE = 1.6,
+        FONT_SIZE = 32;
+
     private final GraphicsText graphic;
     private final SineWave lissajousX, lissajousY;
-    private final double hueOffset;
+    private double hue;
 
     /**
      * Creates a letter with a random color.
@@ -81,8 +96,8 @@ class FlyingLetter {
      */
     FlyingLetter(int letter) {
         graphic = new GraphicsText(Character.toString(letter), 0, 0);
-        graphic.setFont("Verdana", FontStyle.BOLD, 32);
-        hueOffset = Welcome.rand.nextFloat();
+        graphic.setFont("Verdana", FontStyle.BOLD, FONT_SIZE);
+        hue = Welcome.rand.nextFloat();
 
         lissajousX = new SineWave();
         lissajousY = new SineWave();
@@ -103,11 +118,12 @@ class FlyingLetter {
     /**
      * Moves the letter to the appropriate position for time t.
      */
-    void update(double t) {
+    void update(double dt) {
         graphic.setCenter(
-            lissajousX.getValueAt(t),
-            lissajousY.getValueAt(t));
-        graphic.setFillColor(Color.getHSBColor((float) (hueOffset + t / 20) % 1, 1, 1));
+            lissajousX.update(dt),
+            lissajousY.update(dt));
+        hue = (hue + 1 / Math.pow(dt, SPARKLE_CURVE) * COLOR_SPEED) % 1;
+        graphic.setFillColor(Color.getHSBColor((float) hue, 1, 1));
     }
 }
 
@@ -117,6 +133,7 @@ class FlyingLetter {
 class SineWave {
     private double wavelength, offset;
     private double min, max;
+    private double t;  // time
 
     void setCycle(double wavelength, double offset) {
         this.wavelength = wavelength;
@@ -128,10 +145,15 @@ class SineWave {
         this.max = max;
     }
 
+    void setTime(double t) {
+        this.t = t;
+    }
+
     /**
-     * Returns the value of the wave at time t.
+     * Returns the value of the wave after adding dt to time.
      */
-    double getValueAt(double t) {
+    double update(double dt) {
+        t = (t + dt) % (Math.PI * 2 / wavelength);
         return (Math.sin(t * wavelength + offset) + 1) / 2 * (max - min) + min;
     }
 }
