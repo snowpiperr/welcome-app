@@ -62,7 +62,8 @@ public class Welcome {
         DoubleSummaryStatistics stats = letters.stream()
             .mapToDouble((l) -> l.getGraphic().getCenter().getY())
             .summaryStatistics();
-        t += Math.pow((stats.getMax() - stats.getMin()) / canvas.getHeight(), 0.4) * 0.02 + 0.005;
+        double verticalSpread = (stats.getMax() - stats.getMin()) / canvas.getHeight();
+        t += (1 - 1 / (Math.pow(3 * verticalSpread, 5) + 1)) * 0.025 + 0.005;
     }
 }
 
