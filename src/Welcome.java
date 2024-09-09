@@ -17,7 +17,7 @@ public class Welcome {
     private static final double
         PHASE_SPREAD = 0.5,
         INITIAL_TIME = -10,
-        REGULAR_SPEED = 0.025,
+        REGULAR_SPEED = 0.045,
         SLOW_MO_SPEED = 0.005,
         SLOW_MO_TIGHTNESS = 3,
         SLOW_MO_CURVE = 5;
@@ -123,7 +123,7 @@ class FlyingLetter {
             lissajousX.update(dt),
             lissajousY.update(dt));
         hue = (hue + 1 / Math.pow(dt, SPARKLE_CURVE) * COLOR_SPEED) % 1;
-        graphic.setFillColor(Color.getHSBColor((float) hue, 1, 1));
+        graphic.setFillColor(Color.getHSBColor((float) hue, 4, 14));
     }
 }
 
